@@ -1,0 +1,51 @@
+{
+	"name": "svelte-app",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+	},
+	"devDependencies": {
+		"@fontsource/fira-mono": "^5.0.0",
+		"@neoconfetti/svelte": "^2.0.0",
+		"@sveltejs/adapter-auto": "^6.0.0",
+		"@sveltejs/kit": "^2.22.0",
+		"@sveltejs/vite-plugin-svelte": "^6.0.0",
+		"@tailwindcss/postcss": "^4.1.12",
+		"@types/lodash": "^4.17.20",
+		"@types/marked": "^6.0.0",
+		"@types/prismjs": "^1.26.5",
+		"@types/uuid": "^10.0.0",
+		"autoprefixer": "^10.4.21",
+		"postcss": "^8.5.6",
+		"svelte": "^5.25.0",
+		"svelte-check": "^4.0.0",
+		"tailwindcss": "^4.1.12",
+		"typescript": "^5.0.0",
+		"vite": "^7.0.4"
+	},
+	"dependencies": {
+		"@langchain/langgraph-sdk": "^0.0.107",
+		"bits-ui": "^2.9.3",
+		"clsx": "^2.1.1",
+		"date-fns": "^4.1.0",
+		"lodash": "^4.17.21",
+		"lucide-svelte": "^0.539.0",
+		"prismjs": "^1.30.0",
+		"rehype-katex": "^7.0.1",
+		"remark-gfm": "^4.0.1",
+		"remark-math": "^6.0.0",
+		"svelte-markdown": "^0.4.1",
+		"svelte-prism": "^1.1.6",
+		"tailwind-merge": "^3.3.1",
+		"tailwind-variants": "^2.1.0",
+		"uuid": "^11.1.0",
+		"vaul-svelte": "^0.3.2"
+	}
+}
