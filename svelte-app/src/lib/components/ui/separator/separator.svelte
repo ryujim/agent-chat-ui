@@ -1,0 +1,14 @@
+<script lang="ts">
+	import { Separator as SeparatorPrimitive } from "bits-ui";
+	import { cn } from "$lib/utils";
+
+	type $$Props = SeparatorPrimitive.Props;
+
+	let className = undefined;
+	export { className as class };
+</script>
+
+<SeparatorPrimitive.Root
+	class={cn("shrink-0 bg-border", className)}
+	{...$$restProps}
+/>
