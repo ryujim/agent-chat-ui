@@ -4,12 +4,14 @@
   import MarkdownText from './MarkdownText.svelte';
   import ToolCalls from './ToolCalls.svelte';
   import ToolResult from './ToolResult.svelte';
+  import GenericInterrupt from './GenericInterrupt.svelte';
   import { page } from '$app/stores';
   import { streamStore } from '$lib/stores/stream';
   import { artifactStore } from '$lib/stores/artifact';
   import { Button } from '$lib/components/ui/button';
 
   export let message: Message | undefined;
+  export let handleRegenerate: (parentCheckpoint: any) => void;
 
   $: hideToolCalls = $page.url.searchParams.get('hideToolCalls') === 'true';
 
@@ -24,6 +26,15 @@
 
   let uiMessages: any[];
   $: uiMessages = message ? $streamStore.uiMessages.filter(ui => ui.metadata?.message_id === message.id) : [];
+
+  let isLastMessage: boolean;
+  $: isLastMessage = $streamStore.messages[$streamStore.messages.length - 1]?.id === message?.id;
+
+  let hasNoAIOrToolMessages: boolean;
+  $: hasNoAIOrToolMessages = !$streamStore.messages.find(m => m.type === 'ai' || m.type === 'tool');
+
+  let interruptValue: any;
+  $: interruptValue = $streamStore.interrupt;
 </script>
 
 <div class="group mr-auto flex items-start gap-2">
@@ -46,8 +57,26 @@
         </Button>
       {/each}
 
+      {#if interruptValue && (isLastMessage || hasNoAIOrToolMessages)}
+        <GenericInterrupt interrupt={interruptValue} />
+      {/if}
+
       <!-- TODO: Interrupt component -->
-      <!-- TODO: CommandBar and BranchSwitcher -->
+
+      <div class="mr-auto flex items-center gap-2 transition-opacity opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
+        <BranchSwitcher
+          branch={$streamStore.branch}
+          branchOptions={$streamStore.branchOptions}
+          onSelect={(branch) => streamStore.setBranch(branch)}
+          isLoading={$streamStore.isLoading}
+        />
+        <CommandBar
+          content={contentString}
+          isLoading={$streamStore.isLoading}
+          isAiMessage={true}
+          handleRegenerate={() => handleRegenerate(message?.parent_checkpoint)}
+        />
+      </div>
     {/if}
   </div>
 </div>

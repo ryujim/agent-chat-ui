@@ -36,8 +36,8 @@
   let shouldTruncate: boolean;
   $: shouldTruncate = contentLines.length > 4 || contentStr.length > 500;
 
-  let displayedContent: string;
-  $: displayedContent = shouldTruncate && !isExpanded
+  let truncatedContent: string;
+  $: truncatedContent = shouldTruncate
       ? contentStr.length > 500
         ? contentStr.slice(0, 500) + '...'
         : contentLines.slice(0, 4).join('\n') + '\n...'
@@ -62,25 +62,31 @@
     </div>
     <div class="min-w-full bg-gray-100">
       <div class="p-3">
-        {#if isJsonContent}
-          <table class="min-w-full divide-y divide-gray-200">
-            <tbody class="divide-y divide-gray-200">
-              {#each Object.entries(parsedContent) as [key, value]}
-                <tr>
-                  <td class="px-4 py-2 text-sm font-medium whitespace-nowrap text-gray-900">{key}</td>
-                  <td class="px-4 py-2 text-sm text-gray-500">
-                    {#if isComplexValue(value)}
-                      <code class="rounded bg-gray-50 px-2 py-1 font-mono text-sm break-all">{JSON.stringify(value, null, 2)}</code>
-                    {:else}
-                      {String(value)}
-                    {/if}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+        {#if isExpanded}
+          <div transition:slide>
+            {#if isJsonContent}
+              <table class="min-w-full divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200">
+                  {#each Object.entries(parsedContent) as [key, value]}
+                    <tr>
+                      <td class="px-4 py-2 text-sm font-medium whitespace-nowrap text-gray-900">{key}</td>
+                      <td class="px-4 py-2 text-sm text-gray-500">
+                        {#if isComplexValue(value)}
+                          <code class="rounded bg-gray-50 px-2 py-1 font-mono text-sm break-all">{JSON.stringify(value, null, 2)}</code>
+                        {:else}
+                          {String(value)}
+                        {/if}
+                      </td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            {:else}
+              <code class="block text-sm">{contentStr}</code>
+            {/if}
+          </div>
         {:else}
-          <code class="block text-sm">{displayedContent}</code>
+          <code class="block text-sm">{truncatedContent}</code>
         {/if}
       </div>
       {#if shouldTruncate}

@@ -55,7 +55,7 @@
 	import { streamStore } from '$lib/stores/stream';
 
 	// Stream store state
-	const { messages, isLoading, error } = streamStore;
+	const { error } = streamStore;
 
 	// DUMMY STATE for the rest
 	let artifactOpen = false;
@@ -87,7 +87,7 @@
 
 	function handleSubmit(e: any) {
 		e.preventDefault();
-		if ((input.trim().length === 0 && contentBlocks.length === 0) || $isLoading) return;
+		if ((input.trim().length === 0 && contentBlocks.length === 0) || $streamStore.isLoading) return;
 
 		const newHumanMessage = {
 			id: crypto.randomUUID(),
@@ -270,11 +270,11 @@
 					class:grid-rows-1fr_auto={chatStarted}
 				>
 					<div class="pt-8 pb-16  max-w-3xl mx-auto flex flex-col gap-4 w-full">
-						{#each messages as message, index (message.id || `${message.type}-${index}`)}
+						{#each $streamStore.messages as message (message.id)}
 							{#if message.type === 'human'}
-								<HumanMessage {message} {isLoading} />
+								<HumanMessage {message} isLoading={$streamStore.isLoading} />
 							{:else}
-								<AssistantMessage {message} {isLoading} {handleRegenerate} />
+								<AssistantMessage {message} isLoading={$streamStore.isLoading} {handleRegenerate} />
 							{/if}
 						{/each}
 

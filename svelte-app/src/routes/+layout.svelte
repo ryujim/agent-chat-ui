@@ -6,6 +6,10 @@
   let config = $configStore;
 </script>
 
+<svelte:head>
+  <title>Agent Chat</title>
+</svelte:head>
+
 {#if config.apiUrl && config.assistantId}
   <slot />
 {:else}

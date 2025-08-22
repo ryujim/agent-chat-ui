@@ -2,12 +2,53 @@ import { writable } from 'svelte/store';
 import { Client } from '@langchain/langgraph-sdk/client';
 import { configStore, type Config } from './config';
 import type { Message } from '@langchain/langgraph-sdk';
-import {
-  uiMessageReducer,
-  isUIMessage,
-  isRemoveUIMessage,
-  type UIMessage,
-} from '@langchain/langgraph-sdk/dist/react-ui/types.js';
+// Re-implemented from @langchain/langgraph-sdk to avoid deep import issues
+export type UIMessage = {
+  id: string;
+  type: 'ui';
+  name: string;
+  props: Record<string, unknown>;
+  metadata: {
+    message_id?: string;
+    merge?: boolean;
+  };
+};
+
+export function isUIMessage(message: any): message is UIMessage {
+    if (typeof message !== "object" || message == null)
+        return false;
+    if (!("type" in message))
+        return false;
+    return message.type === "ui";
+}
+export function isRemoveUIMessage(message: any): message is { type: 'remove-ui', id: string } {
+    if (typeof message !== "object" || message == null)
+        return false;
+    if (!("type" in message))
+        return false;
+    return message.type === "remove-ui";
+}
+export function uiMessageReducer(state: UIMessage[], update: any): UIMessage[] {
+    const events = Array.isArray(update) ? update : [update];
+    let newState = state.slice();
+    for (const event of events) {
+        if (event.type === "remove-ui") {
+            newState = newState.filter((ui) => ui.id !== event.id);
+            continue;
+        }
+        const index = state.findIndex((ui) => ui.id === event.id);
+        if (index !== -1) {
+            newState[index] = event.metadata.merge
+                ? { ...event, props: { ...state[index].props, ...event.props } }
+                : event;
+        }
+        else {
+            newState.push(event);
+        }
+    }
+    return newState;
+}
+
 
 type StreamState = {
   messages: Message[];
@@ -15,6 +56,9 @@ type StreamState = {
   isLoading: boolean;
   error: Error | null;
   runId: string | null;
+  interrupt: any | null;
+  branch: string | undefined;
+  branchOptions: string[] | undefined;
 };
 
 function createStreamStore() {
@@ -24,6 +68,9 @@ function createStreamStore() {
     isLoading: false,
     error: null,
     runId: null,
+    interrupt: null,
+    branch: undefined,
+    branchOptions: undefined,
   });
 
   let client: Client | null = null;
@@ -61,12 +108,19 @@ function createStreamStore() {
         if (chunk.event === 'metadata') {
           update((s) => ({ ...s, runId: chunk.data.run_id }));
         } else if (chunk.event === 'values') {
-          update((s) => ({ ...s, messages: chunk.data.messages }));
+          update((s) => ({
+            ...s,
+            messages: chunk.data.messages,
+            branch: chunk.data.branch,
+            branchOptions: chunk.data.branchOptions,
+          }));
         } else if (isUIMessage(chunk.data) || isRemoveUIMessage(chunk.data)) {
           update((s) => ({
             ...s,
             uiMessages: uiMessageReducer(s.uiMessages, chunk.data),
           }));
+        } else if (chunk.event === 'interrupt') {
+          update((s) => ({ ...s, interrupt: chunk.data }));
         } else if (chunk.event === 'end') {
           // Stream ended
         }
@@ -82,10 +136,17 @@ function createStreamStore() {
     // TODO: Implement stream stopping logic
   }
 
+  function setBranch(branch: string) {
+    // This is a simplified implementation. The original code is more complex.
+    // I will need to revisit this.
+    submit(null, { branch });
+  }
+
   return {
     subscribe,
     submit,
     stop,
+    setBranch,
   };
 }
 
