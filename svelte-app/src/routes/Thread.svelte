@@ -12,10 +12,13 @@
 	import ContentBlocksPreview from "./ContentBlocksPreview.svelte";
 	import Artifact from "./artifact/Artifact.svelte";
 	import TooltipIconButton from "./TooltipIconButton.svelte";
+	import ArtifactHost from "./artifact/ArtifactHost.svelte";
 
 	import { ArrowDown, LoaderCircle, PanelRightOpen, PanelRightClose, SquarePen, XIcon, Plus, CircleX } from "lucide-svelte";
 	import { page } from "$app/stores";
 	import { cn } from "$lib/utils";
+	import { fileUpload } from '$lib/actions/file-upload';
+	import { slide, fade } from 'svelte/transition';
 
 	import { goto } from '$app/navigation';
 
@@ -57,11 +60,26 @@
 	// DUMMY STATE for the rest
 	let artifactOpen = false;
 	let input = "";
-	let contentBlocks: any[] = [];
-	let dragOver = false;
 	let firstTokenReceived = false; // This will be handled by the store later
 	let interrupt = null; // This will be handled by the store later
     let isLargeScreen = true; // dummy value
+	let isAtBottom = false; // dummy value
+
+	// File upload state
+	let contentBlocks: Base64ContentBlock[] = [];
+	let dragOver = false;
+
+	function handleFiles(e: CustomEvent<Base64ContentBlock[]>) {
+		contentBlocks = e.detail;
+	}
+
+	function handleDragOver(e: CustomEvent<boolean>) {
+		dragOver = e.detail;
+	}
+
+	function removeBlock(idx: number) {
+		contentBlocks = contentBlocks.filter((_, i) => i !== idx);
+	}
 
 	function closeArtifact() {
 		artifactOpen = false;
@@ -92,13 +110,16 @@
 		);
 
 		setInput("");
-		// setContentBlocks([]); // This will be handled by the file upload logic later
+		contentBlocks = [];
 	}
 
 	function handleRegenerate(e: any) {}
-	function handleFileUpload(e: any) {}
-	function handlePaste(e: any) {}
-	function removeBlock(e: any) {}
+	function handleFileUpload(e: any) {
+        // This is now handled by the action
+    }
+	function handlePaste(e: any) {
+        // This is now handled by the action
+    }
 
 	// Derived state
 	$: chatStarted = !!threadId || messages.length > 0;
@@ -109,13 +130,15 @@
 <div class="flex h-screen w-full overflow-hidden">
 	<!-- Chat History Panel -->
 	<div class="relative hidden lg:flex">
-		<!-- This will be animated later -->
-		<div
-			class="absolute z-20 h-full overflow-hidden border-r bg-white"
-			style="width: 300px"
-		>
-			<ThreadHistory />
-		</div>
+		{#if chatHistoryOpen}
+			<div
+				class="absolute z-20 h-full overflow-hidden border-r bg-white"
+				style="width: 300px"
+				transition:slide={{ duration: 300, axis: 'x' }}
+			>
+				<ThreadHistory />
+			</div>
+		{/if}
 	</div>
 
 	<!-- Main Content -->
@@ -274,15 +297,17 @@
 						{/if}
 
 						<!-- ScrollToBottom button -->
-						<div class="animate-in fade-in-0 zoom-in-95 absolute bottom-full left-1/2 mb-4 -translate-x-1/2">
-							<Button
-								variant="outline"
-								on:click={() => {}}
-							>
-								<ArrowDown class="h-4 w-4" />
-								<span>Scroll to bottom</span>
-							</Button>
-						</div>
+						{#if !isAtBottom}
+							<div class="absolute bottom-full left-1/2 mb-4 -translate-x-1/2" transition:fade>
+								<Button
+									variant="outline"
+									on:click={() => {}}
+								>
+									<ArrowDown class="h-4 w-4" />
+									<span>Scroll to bottom</span>
+								</Button>
+							</div>
+						{/if}
 
 						<div
 							class="bg-muted relative z-10 mx-auto mb-8 w-full max-w-3xl rounded-2xl shadow-xs transition-all"
@@ -291,12 +316,14 @@
 							class:border-dotted={dragOver}
 							class:border={!dragOver}
 							class:border-solid={!dragOver}
+							use:fileUpload
+							on:files={handleFiles}
+							on:dragover={handleDragOver}
 						>
 							<form on:submit|preventDefault={handleSubmit} class="mx-auto grid max-w-3xl grid-rows-[1fr_auto] gap-2">
-								<ContentBlocksPreview blocks={contentBlocks} onRemove={removeBlock} />
+								<ContentBlocksPreview blocks={contentBlocks} {removeBlock} />
 								<textarea
 									bind:value={input}
-									on:paste={handlePaste}
 									on:keydown={(e) => {
 										if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.nativeEvent.isComposing) {
 											e.preventDefault();
@@ -363,7 +390,9 @@
 						<XIcon class="size-5" />
 					</button>
 				</div>
-				<!-- <ArtifactContent class="relative flex-grow" /> -->
+    <div class="relative flex-grow">
+      <ArtifactHost />
+    </div>
 			</div>
 		</div>
 	</div>

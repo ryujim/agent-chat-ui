@@ -1,8 +1,7 @@
 import { writable } from 'svelte/store';
-import type { ComponentType } from 'svelte';
 
 type ArtifactState = {
-  component: ComponentType | null;
+  name: string | null;
   props: Record<string, unknown>;
   context: Record<string, unknown>;
   isOpen: boolean;
@@ -10,7 +9,7 @@ type ArtifactState = {
 
 function createArtifactStore() {
   const { subscribe, set, update } = writable<ArtifactState>({
-    component: null,
+    name: null,
     props: {},
     context: {},
     isOpen: false,
@@ -18,11 +17,11 @@ function createArtifactStore() {
 
   return {
     subscribe,
-    open: (component: ComponentType, props: Record<string, unknown> = {}, context: Record<string, unknown> = {}) => {
-      set({ component, props, context, isOpen: true });
+    open: (name: string, props: Record<string, unknown> = {}, context: Record<string, unknown> = {}) => {
+      set({ name, props, context, isOpen: true });
     },
     close: () => {
-      set({ component: null, props: {}, context: {}, isOpen: false });
+      set({ name: null, props: {}, context: {}, isOpen: false });
     },
     setContext: (context: Record<string, unknown>) => {
       update((s) => ({ ...s, context }));
